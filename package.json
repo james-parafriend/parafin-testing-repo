@@ -1,0 +1,44 @@
+{
+  "name": "parafin-widget-quickstart",
+  "version": "0.1.0",
+  "private": false,
+  "dependencies": {
+    "@parafin/react": "^1.0.8",
+    "axios": "^1.2.3",
+    "concurrently": "^7.6.0",
+    "express-session": "^1.17.3",
+    "nodemon": "^2.0.20",
+    "react": "^16.13.0",
+    "react-dom": "^16.13.0",
+    "react-scripts": "^5.0.1",
+    "styled-components": "^6.1.8"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "api": "nodemon ./server/server.js",
+    "dev": "concurrently \"react-scripts start\" \"nodemon server/server.js\""
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "overrides": {
+    "react-error-overlay": "6.0.9"
+  },
+  "proxy": "http://localhost:8080"
+}
