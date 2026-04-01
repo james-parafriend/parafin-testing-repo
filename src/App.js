@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { ParafinWidget } from "@parafin/react";
+import AdminPage from "./AdminPage";
 import "./index.css";
 
 // Pre-configured restaurant data for demo
@@ -30,6 +31,8 @@ function App() {
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [activePage, setActivePage] = useState("capital");
 
   // Toggle between dropdown and manual input
   const [showManualInput, setShowManualInput] = useState(false);
@@ -75,7 +78,7 @@ function App() {
     }
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       handleLoadPersonId();
     }
@@ -90,8 +93,19 @@ function App() {
           <nav className="nav">
             <button className="nav-btn">Orders</button>
             <button className="nav-btn">Menu</button>
-            <button className="nav-btn active">Capital</button>
+            <button
+              className={`nav-btn${activePage === "capital" ? " active" : ""}`}
+              onClick={() => setActivePage("capital")}
+            >
+              Capital
+            </button>
             <button className="nav-btn">Payouts</button>
+            <button
+              className={`nav-btn${activePage === "admin" ? " active" : ""}`}
+              onClick={() => setActivePage("admin")}
+            >
+              Admin
+            </button>
           </nav>
         </div>
         <div className="header-right">
@@ -104,7 +118,7 @@ function App() {
                 placeholder="person_xxx"
                 value={manualPersonId}
                 onChange={(e) => setManualPersonId(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyDown}
               />
               <button className="auth-btn" onClick={handleLoadPersonId}>
                 Load
@@ -144,58 +158,74 @@ function App() {
         </div>
       </header>
 
+      {/* Admin Page */}
+      {activePage === "admin" && (
+        <main className="main">
+          <AdminPage
+            setCurrentPersonId={setCurrentPersonId}
+            setActivePage={setActivePage}
+          />
+        </main>
+      )}
+
       {/* Main Content */}
-      <main className="main">
-        <div className="page-header">
-          <h2>Business Capital</h2>
-          <p>
-            Access funding to grow your restaurant, with flexible repayment
-            based on your GrubDash sales.
-          </p>
-        </div>
-
-        {/* Parafin Widget */}
-        <section className="widget-section">
-          {loading && <div className="loading">Loading capital options...</div>}
-
-          {error && <div className="error">Error: {error}</div>}
-
-          {!loading && !error && token && (
-            <ParafinWidget
-              token={token}
-              product="capital"
-              onEvent={(eventType) => console.log("Parafin Event:", eventType)}
-              onExit={() => console.log("Widget closed")}
-            />
-          )}
-        </section>
-
-        {/* Benefits Section */}
-        <section className="benefits-section">
-          <div className="benefit-card">
-            <h3>💰 Flexible Funding</h3>
+      {activePage === "capital" && (
+        <main className="main">
+          <div className="page-header">
+            <h2>Business Capital</h2>
             <p>
-              Get between $5,000 and $100,000 to invest in your business —
-              equipment, inventory, marketing, or renovations.
+              Access funding to grow your restaurant, with flexible repayment
+              based on your GrubDash sales.
             </p>
           </div>
-          <div className="benefit-card">
-            <h3>📈 Revenue-Based Repayment</h3>
-            <p>
-              Repay automatically as a small percentage of your daily GrubDash
-              sales. Slower days mean smaller payments.
-            </p>
-          </div>
-          <div className="benefit-card">
-            <h3>⚡ Fast & Simple</h3>
-            <p>
-              No lengthy applications or credit checks. Get approved based on
-              your sales history and receive funds in as little as 1 business
-              day.
-            </p>
-          </div>
-        </section>
-      </main>
+
+          {/* Parafin Widget */}
+          <section className="widget-section">
+            {loading && (
+              <div className="loading">Loading capital options...</div>
+            )}
+
+            {error && <div className="error">Error: {error}</div>}
+
+            {!loading && !error && token && (
+              <ParafinWidget
+                token={token}
+                product="capital"
+                onEvent={(eventType) =>
+                  console.log("Parafin Event:", eventType)
+                }
+                onExit={() => console.log("Widget closed")}
+              />
+            )}
+          </section>
+
+          {/* Benefits Section */}
+          <section className="benefits-section">
+            <div className="benefit-card">
+              <h3>💰 Flexible Funding</h3>
+              <p>
+                Get between $5,000 and $100,000 to invest in your business —
+                equipment, inventory, marketing, or renovations.
+              </p>
+            </div>
+            <div className="benefit-card">
+              <h3>📈 Revenue-Based Repayment</h3>
+              <p>
+                Repay automatically as a small percentage of your daily GrubDash
+                sales. Slower days mean smaller payments.
+              </p>
+            </div>
+            <div className="benefit-card">
+              <h3>⚡ Fast & Simple</h3>
+              <p>
+                No lengthy applications or credit checks. Get approved based on
+                your sales history and receive funds in as little as 1 business
+                day.
+              </p>
+            </div>
+          </section>
+        </main>
+      )}
     </div>
   );
 }
