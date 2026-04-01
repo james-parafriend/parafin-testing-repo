@@ -216,6 +216,168 @@ body {
   line-height: 1.5;
 }
 
+/* Admin Page */
+.admin-page {
+  width: 100%;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 0;
+}
+
+.admin-tab {
+  background: transparent;
+  border: none;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.admin-tab:hover {
+  color: #333;
+}
+
+.admin-tab.active {
+  color: #d62828;
+  border-bottom-color: #d62828;
+}
+
+.admin-content {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.admin-empty {
+  padding: 48px;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.admin-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-weight: 600;
+  color: #555;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.admin-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+}
+
+.admin-table tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table tr:hover td {
+  background: #fafafa;
+}
+
+.mono {
+  font-family: "SF Mono", "Fira Code", monospace;
+  font-size: 12px;
+  color: #444;
+}
+
+.muted {
+  color: #aaa;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #e5e7eb;
+  color: #555;
+  text-transform: capitalize;
+}
+
+.status-badge.status-active {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.status-badge.status-inactive,
+.status-badge.status-closed {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.person-select-inline {
+  padding: 4px 8px;
+  font-size: 12px;
+  font-family: "SF Mono", "Fira Code", monospace;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  color: #444;
+  background: white;
+  max-width: 260px;
+}
+
+.select-btn {
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #d62828;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.select-btn:hover {
+  background: #b91c1c;
+}
+
+.select-btn:disabled {
+  background: #e5e7eb;
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+.retry-btn {
+  background: transparent;
+  border: 1px solid #b91c1c;
+  color: #b91c1c;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+.retry-btn:hover {
+  background: #fee2e2;
+}
+
 /* Responsive - stack benefits on smaller screens */
 @media (max-width: 768px) {
   .benefits-section {
