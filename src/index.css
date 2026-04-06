@@ -216,6 +216,102 @@ body {
   line-height: 1.5;
 }
 
+/* Env Toggle */
+.env-toggle {
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.env-toggle:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.env-toggle.env-dev {
+  background: rgba(251, 191, 36, 0.25);
+  border-color: rgba(251, 191, 36, 0.6);
+  color: #fde68a;
+}
+
+.env-toggle.env-dev:hover {
+  background: rgba(251, 191, 36, 0.35);
+}
+
+/* Link button (inline text link style) */
+.link-btn {
+  background: none;
+  border: none;
+  color: #d62828;
+  cursor: pointer;
+  font-size: inherit;
+  padding: 0;
+  text-decoration: underline;
+}
+
+/* Admin Controls (profile selector + search) */
+.admin-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.admin-profile-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.admin-select {
+  padding: 7px 10px;
+  font-size: 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  color: #333;
+  min-width: 200px;
+  cursor: pointer;
+}
+
+.admin-select:focus {
+  outline: none;
+  border-color: #d62828;
+}
+
+.admin-search {
+  flex: 1;
+}
+
+.admin-search-input {
+  width: 100%;
+  padding: 7px 12px;
+  font-size: 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: white;
+  color: #333;
+}
+
+.admin-search-input:focus {
+  outline: none;
+  border-color: #d62828;
+}
+
 /* Admin Page */
 .admin-page {
   width: 100%;

@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-// Safely extract an ID from a person or business object,
-// handling both {id: "person_xxx"} and {person_id: "person_xxx"} shapes.
 function getPersonId(p) {
   return p.id || p.person_id || null;
 }
@@ -39,8 +37,16 @@ function formatLinkedBusinesses(person, relationships, businesses, loading) {
     .join(", ");
 }
 
-function AdminPage({ setCurrentPersonId, setActivePage }) {
+function AdminPage({
+  env,
+  profiles,
+  activeProfile,
+  setActiveProfile,
+  setCurrentPersonId,
+  setActivePage,
+}) {
   const [activeTab, setActiveTab] = useState("businesses");
+  const [search, setSearch] = useState("");
 
   const [businesses, setBusinesses] = useState(null);
   const [businessesLoading, setBusinessesLoading] = useState(false);
@@ -52,14 +58,15 @@ function AdminPage({ setCurrentPersonId, setActivePage }) {
   const [relationships, setRelationships] = useState({});
   const [relationshipsLoading, setRelationshipsLoading] = useState(false);
 
-  // tracks the selected person for businesses that have multiple linked_persons
   const [selectedPersonMap, setSelectedPersonMap] = useState({});
+
+  const profileParam = `?profile=${encodeURIComponent(activeProfile)}`;
 
   const fetchBusinesses = async () => {
     setBusinessesLoading(true);
     setBusinessesError(null);
     try {
-      const response = await axios.get("/parafin/businesses");
+      const response = await axios.get(`/parafin/businesses${profileParam}`);
       setBusinesses(response.data.businesses || []);
     } catch (err) {
       setBusinessesError("Failed to fetch businesses");
@@ -72,7 +79,7 @@ function AdminPage({ setCurrentPersonId, setActivePage }) {
     setPersonsLoading(true);
     setPersonsError(null);
     try {
-      const response = await axios.get("/parafin/persons");
+      const response = await axios.get(`/parafin/persons${profileParam}`);
       const personList = response.data.persons || [];
       setPersons(personList);
 
@@ -80,7 +87,9 @@ function AdminPage({ setCurrentPersonId, setActivePage }) {
       if (relIds.length > 0) {
         setRelationshipsLoading(true);
         const relResults = await Promise.allSettled(
-          relIds.map((id) => axios.get(`/parafin/person_business_relationships/${id}`))
+          relIds.map((id) =>
+            axios.get(`/parafin/person_business_relationships/${id}${profileParam}`)
+          )
         );
         const relMap = {};
         relIds.forEach((id, i) => {
@@ -96,13 +105,19 @@ function AdminPage({ setCurrentPersonId, setActivePage }) {
     }
   };
 
-  // load businesses on mount (default tab)
+  // refetch when profile changes
   useEffect(() => {
+    if (!activeProfile) return;
+    setBusinesses(null);
+    setPersons(null);
+    setRelationships({});
+    setSearch("");
     fetchBusinesses();
-  }, []);
+  }, [activeProfile]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
+    setSearch("");
     if (tab === "persons" && persons === null) fetchPersons();
   };
 
@@ -111,18 +126,72 @@ function AdminPage({ setCurrentPersonId, setActivePage }) {
     setActivePage("capital");
   };
 
-  // returns the currently chosen person_id for a business row
   const resolvePersonForBusiness = (biz) => {
     const linked = biz.linked_persons || [];
     if (linked.length === 0) return null;
     return selectedPersonMap[getBusinessId(biz)] || getPersonId(linked[0]);
   };
 
+  // profile dropdown — only show profiles matching current env
+  const filteredProfiles = profiles.filter((p) => p.env === env);
+
+  // search filter
+  const searchLower = search.toLowerCase();
+
+  const filteredBusinesses = (businesses || []).filter((b) => {
+    if (!search) return true;
+    return (
+      getBusinessName(b).toLowerCase().includes(searchLower) ||
+      (getBusinessId(b) || "").toLowerCase().includes(searchLower) ||
+      (b.external_id || "").toLowerCase().includes(searchLower)
+    );
+  });
+
+  const filteredPersons = (persons || []).filter((p) => {
+    if (!search) return true;
+    const name = [p.first_name, p.last_name].filter(Boolean).join(" ").toLowerCase();
+    return (
+      name.includes(searchLower) ||
+      (getPersonId(p) || "").toLowerCase().includes(searchLower) ||
+      (p.external_id || "").toLowerCase().includes(searchLower)
+    );
+  });
+
   return (
     <div className="admin-page">
       <div className="page-header">
         <h2>Admin — Business &amp; Person Explorer</h2>
         <p>Browse all businesses and persons. Select one to load it in the Capital widget.</p>
+      </div>
+
+      {/* Profile selector + search bar */}
+      <div className="admin-controls">
+        <div className="admin-profile-selector">
+          <label className="admin-label">Credential Profile</label>
+          <select
+            className="admin-select"
+            value={activeProfile}
+            onChange={(e) => setActiveProfile(e.target.value)}
+          >
+            {filteredProfiles.map((p) => (
+              <option key={p.name} value={p.name}>
+                {p.name}
+              </option>
+            ))}
+            {filteredProfiles.length === 0 && (
+              <option disabled>No profiles for {env}</option>
+            )}
+          </select>
+        </div>
+        <div className="admin-search">
+          <input
+            type="text"
+            className="admin-search-input"
+            placeholder="Search by name, ID, or external ID…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
       </div>
 
       <div className="admin-tabs">
@@ -149,10 +218,12 @@ function AdminPage({ setCurrentPersonId, setActivePage }) {
               <button className="retry-btn" onClick={fetchBusinesses}>Retry</button>
             </div>
           )}
-          {businesses && businesses.length === 0 && (
-            <div className="admin-empty">No businesses found.</div>
+          {businesses && filteredBusinesses.length === 0 && (
+            <div className="admin-empty">
+              {search ? "No businesses match your search." : "No businesses found."}
+            </div>
           )}
-          {businesses && businesses.length > 0 && (
+          {businesses && filteredBusinesses.length > 0 && (
             <div className="table-wrapper">
               <table className="admin-table">
                 <thead>
@@ -165,7 +236,7 @@ function AdminPage({ setCurrentPersonId, setActivePage }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {businesses.map((biz) => {
+                  {filteredBusinesses.map((biz) => {
                     const bizId = getBusinessId(biz);
                     const linked = biz.linked_persons || [];
                     const resolvedPersonId = resolvePersonForBusiness(biz);
@@ -228,10 +299,12 @@ function AdminPage({ setCurrentPersonId, setActivePage }) {
               <button className="retry-btn" onClick={fetchPersons}>Retry</button>
             </div>
           )}
-          {persons && persons.length === 0 && (
-            <div className="admin-empty">No persons found.</div>
+          {persons && filteredPersons.length === 0 && (
+            <div className="admin-empty">
+              {search ? "No persons match your search." : "No persons found."}
+            </div>
           )}
-          {persons && persons.length > 0 && (
+          {persons && filteredPersons.length > 0 && (
             <div className="table-wrapper">
               <table className="admin-table">
                 <thead>
@@ -244,7 +317,7 @@ function AdminPage({ setCurrentPersonId, setActivePage }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {persons.map((person) => {
+                  {filteredPersons.map((person) => {
                     const pid = getPersonId(person);
                     return (
                       <tr key={pid}>

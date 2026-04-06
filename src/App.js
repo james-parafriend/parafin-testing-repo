@@ -4,84 +4,71 @@ import { ParafinWidget } from "@parafin/react";
 import AdminPage from "./AdminPage";
 import "./index.css";
 
-// Pre-configured restaurant data for demo
-const RESTAURANTS = [
-  {
-    personId: "person_d0181961-bb73-475e-8022-1431621083f9",
-    name: "Sunrise Tacos",
-  },
-  {
-    personId: "person_fa21578d-f963-4262-b900-28d776cf003f",
-    name: "Golden Dragon Kitchen",
-  },
-  {
-    personId: "person_cb483d31-417a-4b0a-b49c-a5671c6aae29",
-    name: "Bella Italia",
-  },
-  {
-    personId: "person_57b7c80a-dbb1-49a6-9c8b-372d042786f5",
-    name: "Harborview Seafood",
-  },
-];
+const DEFAULT_PROFILE = "James - Sandbox";
 
 function App() {
+  const [activePage, setActivePage] = useState("admin");
+
+  // environment toggle
+  const [env, setEnv] = useState("prod");
+
+  // credential profiles fetched from server
+  const [profiles, setProfiles] = useState([]);
+
+  // active profile — defaults to James - Sandbox
+  const [activeProfile, setActiveProfile] = useState(DEFAULT_PROFILE);
+
+  // capital widget state
+  const [currentPersonId, setCurrentPersonId] = useState(null);
   const [token, setToken] = useState(null);
-  const [currentPersonId, setCurrentPersonId] = useState(
-    RESTAURANTS[0].personId,
-  );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [tokenLoading, setTokenLoading] = useState(false);
+  const [tokenError, setTokenError] = useState(null);
 
-  const [activePage, setActivePage] = useState("capital");
-
-  // Toggle between dropdown and manual input
-  const [showManualInput, setShowManualInput] = useState(false);
-  const [manualPersonId, setManualPersonId] = useState("");
-
-  // Fetch token whenever currentPersonId changes
+  // fetch profiles on mount
   useEffect(() => {
-    const fetchToken = async () => {
-      setLoading(true);
-      setError(null);
-      setToken(null);
+    axios.get("/parafin/profiles").then((res) => {
+      setProfiles(res.data.profiles || []);
+    });
+  }, []);
 
+  // when env toggles, reset profile to first matching profile (or default if available)
+  useEffect(() => {
+    const matching = profiles.filter((p) => p.env === env);
+    const keepCurrent = matching.find((p) => p.name === activeProfile);
+    if (!keepCurrent && matching.length > 0) {
+      setActiveProfile(matching[0].name);
+    }
+  }, [env, profiles]);
+
+  // fetch token whenever currentPersonId or activeProfile changes
+  useEffect(() => {
+    if (!currentPersonId || !activeProfile) return;
+
+    const fetchToken = async () => {
+      setTokenLoading(true);
+      setTokenError(null);
+      setToken(null);
       try {
         const response = await axios.get(
-          `/parafin/token/${currentPersonId}/false`,
+          `/parafin/token/${currentPersonId}?profile=${encodeURIComponent(activeProfile)}`
         );
-
         if (response.data.parafinToken) {
           setToken(response.data.parafinToken);
         } else {
-          setError("No token returned from API");
+          setTokenError("No token returned from API");
         }
       } catch (err) {
-        console.error("Error fetching token:", err);
-        setError(err.response?.data?.message || "Failed to fetch token");
+        setTokenError(err.response?.data?.message || "Failed to fetch token");
       } finally {
-        setLoading(false);
+        setTokenLoading(false);
       }
     };
 
     fetchToken();
-  }, [currentPersonId]);
+  }, [currentPersonId, activeProfile]);
 
-  const handleRestaurantChange = (e) => {
-    setCurrentPersonId(e.target.value);
-  };
-
-  const handleLoadPersonId = () => {
-    const personId = manualPersonId.trim();
-    if (personId) {
-      setCurrentPersonId(personId);
-      setManualPersonId("");
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      handleLoadPersonId();
-    }
+  const handleEnvToggle = () => {
+    setEnv((prev) => (prev === "prod" ? "dev" : "prod"));
   };
 
   return (
@@ -91,15 +78,12 @@ function App() {
         <div className="header-left">
           <h1 className="logo">🍔 GrubDash</h1>
           <nav className="nav">
-            <button className="nav-btn">Orders</button>
-            <button className="nav-btn">Menu</button>
             <button
               className={`nav-btn${activePage === "capital" ? " active" : ""}`}
               onClick={() => setActivePage("capital")}
             >
               Capital
             </button>
-            <button className="nav-btn">Payouts</button>
             <button
               className={`nav-btn${activePage === "admin" ? " active" : ""}`}
               onClick={() => setActivePage("admin")}
@@ -109,52 +93,12 @@ function App() {
           </nav>
         </div>
         <div className="header-right">
-          {showManualInput ? (
-            <>
-              <span className="logged-in-label">Person ID:</span>
-              <input
-                type="text"
-                className="person-id-input"
-                placeholder="person_xxx"
-                value={manualPersonId}
-                onChange={(e) => setManualPersonId(e.target.value)}
-                onKeyDown={handleKeyDown}
-              />
-              <button className="auth-btn" onClick={handleLoadPersonId}>
-                Load
-              </button>
-              <button
-                className="auth-btn"
-                onClick={() => setShowManualInput(false)}
-              >
-                Sign In
-              </button>
-            </>
-          ) : (
-            <>
-              <span className="logged-in-label">Logged in as:</span>
-              <select
-                className="restaurant-select"
-                value={currentPersonId}
-                onChange={handleRestaurantChange}
-              >
-                {RESTAURANTS.map((restaurant) => (
-                  <option key={restaurant.personId} value={restaurant.personId}>
-                    {restaurant.name}
-                  </option>
-                ))}
-                {!RESTAURANTS.find((r) => r.personId === currentPersonId) && (
-                  <option value={currentPersonId}>Custom Business</option>
-                )}
-              </select>
-              <button
-                className="auth-btn"
-                onClick={() => setShowManualInput(true)}
-              >
-                Sign Out
-              </button>
-            </>
-          )}
+          <button
+            className={`env-toggle${env === "dev" ? " env-dev" : ""}`}
+            onClick={handleEnvToggle}
+          >
+            {env === "dev" ? "Dev" : "Prod"}
+          </button>
         </div>
       </header>
 
@@ -162,13 +106,17 @@ function App() {
       {activePage === "admin" && (
         <main className="main">
           <AdminPage
+            env={env}
+            profiles={profiles}
+            activeProfile={activeProfile}
+            setActiveProfile={setActiveProfile}
             setCurrentPersonId={setCurrentPersonId}
             setActivePage={setActivePage}
           />
         </main>
       )}
 
-      {/* Main Content */}
+      {/* Capital Page */}
       {activePage === "capital" && (
         <main className="main">
           <div className="page-header">
@@ -179,27 +127,32 @@ function App() {
             </p>
           </div>
 
-          {/* Parafin Widget */}
           <section className="widget-section">
-            {loading && (
+            {!currentPersonId && (
+              <div className="loading">
+                Select a business or person from the{" "}
+                <button className="link-btn" onClick={() => setActivePage("admin")}>
+                  Admin page
+                </button>{" "}
+                to load the capital widget.
+              </div>
+            )}
+            {currentPersonId && tokenLoading && (
               <div className="loading">Loading capital options...</div>
             )}
-
-            {error && <div className="error">Error: {error}</div>}
-
-            {!loading && !error && token && (
+            {currentPersonId && tokenError && (
+              <div className="error">Error: {tokenError}</div>
+            )}
+            {currentPersonId && !tokenLoading && !tokenError && token && (
               <ParafinWidget
                 token={token}
                 product="capital"
-                onEvent={(eventType) =>
-                  console.log("Parafin Event:", eventType)
-                }
+                onEvent={(eventType) => console.log("Parafin Event:", eventType)}
                 onExit={() => console.log("Widget closed")}
               />
             )}
           </section>
 
-          {/* Benefits Section */}
           <section className="benefits-section">
             <div className="benefit-card">
               <h3>💰 Flexible Funding</h3>
